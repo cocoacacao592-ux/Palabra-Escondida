@@ -1,163 +1,761 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
-<title>Palabra Escondida</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sopa de Letras</title>
 
 <style>
+
 body {
-    font-family: Arial;
+    font-family: Arial, sans-serif;
+    background: #eaf4ff;
     text-align: center;
-    background: #e8f4ff;
+    margin: 0;
+    padding: 20px;
+    color: #243447;
 }
 
 h1 {
     color: #2563eb;
+    font-size: 40px;
 }
 
-#letras {
+.descripcion {
+    font-size: 18px;
+}
+
+.menu {
+    margin: 20px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+#nivel {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#contador {
+    font-size: 18px;
+    margin: 10px;
+}
+
+#tablero {
     display: grid;
-    grid-template-columns: repeat(8, 45px);
-    gap: 5px;
+    gap: 4px;
     justify-content: center;
-    margin: 30px;
+    margin: 25px auto;
+    user-select: none;
 }
 
 .letra {
-    width: 45px;
-    height: 45px;
-    border: none;
+    width: 42px;
+    height: 42px;
     background: white;
+    border: 2px solid #93c5fd;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: 20px;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 5px;
 }
 
-.seleccionada {
+.letra.seleccionada {
     background: #60a5fa;
     color: white;
 }
 
-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
+.letra.encontrada {
+    background: #22c55e;
     color: white;
-    cursor: pointer;
 }
+
+#palabras {
+    max-width: 600px;
+    margin: 20px auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.palabra {
+    background: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    border: 2px solid #93c5fd;
+}
+
+.palabra.encontrada {
+    background: #22c55e;
+    color: white;
+    text-decoration: line-through;
+}
+
+#mensaje {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px;
+}
+
+@media (max-width: 600px) {
+
+    .letra {
+        width: 32px;
+        height: 32px;
+        font-size: 15px;
+    }
+
+    h1 {
+        font-size: 30px;
+    }
+}
+
 </style>
+
 </head>
 
 <body>
 
-<h1>🔤 Palabra Escondida</h1>
+<h1>🔎 Sopa de Letras</h1>
 
-<p>Encuentra la palabra:</p>
+<p class="descripcion">
+Encuentra todas las palabras escondidas.
+</p>
 
-<h2 id="palabra"></h2>
+<div class="menu">
 
-<div id="letras"></div>
+<button onclick="cambiarNivel(1)">Nivel 1</button>
+<button onclick="cambiarNivel(2)">Nivel 2</button>
+<button onclick="cambiarNivel(3)">Nivel 3</button>
+<button onclick="cambiarNivel(4)">Nivel 4</button>
 
-<p id="mensaje"></p>
+</div>
 
-<button onclick="nuevoJuego()">Nueva palabra</button>
+<div id="nivel">
+Nivel 1
+</div>
+
+<div id="contador">
+Palabras encontradas: 0
+</div>
+
+<div id="tablero"></div>
+
+<h2>Palabras:</h2>
+
+<div id="palabras"></div>
+
+<div id="mensaje"></div>
+
+<button onclick="nuevoJuego()">🔄 Reiniciar nivel</button>
+
 
 <script>
 
-const palabras = [
-    "GATO",
-    "CASA",
-    "LUNA",
-    "SOL",
-    "ARBOL",
-    "FLOR",
-    "LIBRO",
-    "JUEGO"
+const niveles = {
+
+    1: {
+        tamaño: 6,
+        palabras: [
+            "SOL",
+            "LUNA",
+            "MAR"
+        ]
+    },
+
+    2: {
+        tamaño: 8,
+        palabras: [
+            "GATO",
+            "CASA",
+            "FLOR",
+            "LUNA",
+            "SOL"
+        ]
+    },
+
+    3: {
+        tamaño: 10,
+        palabras: [
+            "ESCUELA",
+            "LIBRO",
+            "AMIGO",
+            "MUSICA",
+            "JUEGO",
+            "ARBOL",
+            "FAMILIA"
+        ]
+    },
+
+    4: {
+        tamaño: 12,
+        palabras: [
+            "COMPUTADORA",
+            "AVENTURA",
+            "ESTRELLA",
+            "NATURALEZA",
+            "ELEFANTE",
+            "MARIPOSA",
+            "PLANETA",
+            "GALAXIA",
+            "VOLCAN",
+            "OCÉANO"
+        ]
+    }
+
+};
+
+
+let nivelActual = 1;
+
+let tablero;
+
+let seleccionActual = [];
+
+let palabrasEncontradas = [];
+
+let posicionesPalabras = {};
+
+
+const letras =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+
+const direcciones = [
+
+    [0,1],
+    [1,0],
+    [0,-1],
+    [-1,0],
+
+    [1,1],
+    [1,-1],
+    [-1,1],
+    [-1,-1]
+
 ];
 
-let palabra;
-let seleccion = "";
 
 function nuevoJuego() {
 
-    palabra =
-        palabras[Math.floor(Math.random()*palabras.length)];
+    const datos = niveles[nivelActual];
 
-    seleccion = "";
+    const tamaño = datos.tamaño;
 
-    document.getElementById("palabra").textContent =
-        "???";
+    tablero =
+        Array(tamaño)
+        .fill()
+        .map(() =>
+            Array(tamaño).fill("")
+        );
+
+    posicionesPalabras = {};
+
+    palabrasEncontradas = [];
+
+    colocarPalabras();
+
+    llenarEspacios();
+
+    mostrarTablero();
+
+    mostrarPalabras();
+
+    actualizarContador();
 
     document.getElementById("mensaje").textContent = "";
 
-    crearLetras();
 }
 
-function crearLetras() {
 
-    let letras = palabra.split("");
+function colocarPalabras() {
 
-    const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const datos = niveles[nivelActual];
 
-    while(letras.length < 64) {
+    const tamaño = datos.tamaño;
 
-        letras.push(
-            abc[Math.floor(Math.random()*abc.length)]
-        );
+
+    datos.palabras.forEach(palabra => {
+
+        let colocada = false;
+
+        let intentos = 0;
+
+
+        while(!colocada && intentos < 1000) {
+
+            intentos++;
+
+
+            const direccion =
+                direcciones[
+                    Math.floor(
+                        Math.random() *
+                        direcciones.length
+                    )
+                ];
+
+
+            const fila =
+                Math.floor(
+                    Math.random() * tamaño
+                );
+
+
+            const columna =
+                Math.floor(
+                    Math.random() * tamaño
+                );
+
+
+            let posiciones = [];
+
+            let puedeColocar = true;
+
+
+            for(
+                let i = 0;
+                i < palabra.length;
+                i++
+            ) {
+
+                const f =
+                    fila +
+                    direccion[0] * i;
+
+                const c =
+                    columna +
+                    direccion[1] * i;
+
+
+                if(
+                    f < 0 ||
+                    f >= tamaño ||
+                    c < 0 ||
+                    c >= tamaño
+                ) {
+
+                    puedeColocar = false;
+
+                    break;
+
+                }
+
+
+                if(
+                    tablero[f][c] !== "" &&
+                    tablero[f][c] !== palabra[i]
+                ) {
+
+                    puedeColocar = false;
+
+                    break;
+
+                }
+
+
+                posiciones.push([f,c]);
+
+            }
+
+
+            if(puedeColocar) {
+
+                posiciones.forEach(
+                    (posicion, i) => {
+
+                        tablero[
+                            posicion[0]
+                        ][
+                            posicion[1]
+                        ] = palabra[i];
+
+                    }
+                );
+
+
+                posicionesPalabras[palabra] =
+                    posiciones;
+
+                colocada = true;
+
+            }
+
+        }
+
+    });
+
+}
+
+
+function llenarEspacios() {
+
+    const tamaño = niveles[nivelActual].tamaño;
+
+
+    for(let fila = 0; fila < tamaño; fila++) {
+
+        for(let columna = 0; columna < tamaño; columna++) {
+
+            if(tablero[fila][columna] === "") {
+
+                tablero[fila][columna] =
+                    letras[
+                        Math.floor(
+                            Math.random() *
+                            letras.length
+                        )
+                    ];
+
+            }
+
+        }
+
     }
 
-    letras.sort(() => Math.random()-0.5);
+}
 
-    let contenedor =
-        document.getElementById("letras");
+
+function mostrarTablero() {
+
+    const contenedor =
+        document.getElementById("tablero");
+
+
+    const tamaño =
+        niveles[nivelActual].tamaño;
+
 
     contenedor.innerHTML = "";
 
-    letras.forEach(letra => {
 
-        let boton = document.createElement("button");
+    contenedor.style.gridTemplateColumns =
+        `repeat(${tamaño}, auto)`;
 
-        boton.className = "letra";
 
-        boton.textContent = letra;
+    for(let fila = 0; fila < tamaño; fila++) {
 
-        boton.onclick = function() {
+        for(let columna = 0; columna < tamaño; columna++) {
 
-            seleccion += letra;
+            const boton =
+                document.createElement("div");
 
-            boton.classList.add("seleccionada");
 
-            comprobar();
-        };
+            boton.className = "letra";
 
-        contenedor.appendChild(boton);
+            boton.textContent =
+                tablero[fila][columna];
+
+
+            boton.dataset.fila = fila;
+
+            boton.dataset.columna = columna;
+
+
+            boton.addEventListener(
+                "click",
+                () => seleccionarLetra(boton)
+            );
+
+
+            contenedor.appendChild(boton);
+
+        }
+
+    }
+
+}
+
+
+function seleccionarLetra(boton) {
+
+    const fila =
+        Number(boton.dataset.fila);
+
+    const columna =
+        Number(boton.dataset.columna);
+
+
+    const posicion =
+        seleccionActual.findIndex(
+            posicion =>
+                posicion[0] === fila &&
+                posicion[1] === columna
+        );
+
+
+    if(posicion !== -1) {
+
+        seleccionActual.splice(posicion,1);
+
+        boton.classList.remove(
+            "seleccionada"
+        );
+
+        return;
+
+    }
+
+
+    seleccionActual.push([
+        fila,
+        columna
+    ]);
+
+
+    boton.classList.add(
+        "seleccionada"
+    );
+
+
+    comprobarPalabra();
+
+}
+
+
+function comprobarPalabra() {
+
+    if(seleccionActual.length < 2)
+        return;
+
+
+    const palabra =
+        seleccionActual
+        .map(
+            posicion =>
+                tablero[
+                    posicion[0]
+                ][
+                    posicion[1]
+                ]
+        )
+        .join("");
+
+
+    const palabraInvertida =
+        palabra
+        .split("")
+        .reverse()
+        .join("");
+
+
+    const palabras =
+        niveles[nivelActual].palabras;
+
+
+    let encontrada = null;
+
+
+    palabras.forEach(p => {
+
+        if(
+            palabra === p ||
+            palabraInvertida === p
+        ) {
+
+            encontrada = p;
+
+        }
+
     });
-}
 
-function comprobar() {
 
-    if(seleccion === palabra) {
+    if(encontrada) {
 
-        document.getElementById("mensaje").textContent =
-            "🎉 ¡Encontraste la palabra!";
+        if(
+            !palabrasEncontradas.includes(
+                encontrada
+            )
+        ) {
 
-        document.getElementById("palabra").textContent =
-            palabra;
+            palabrasEncontradas.push(
+                encontrada
+            );
+
+
+            marcarPalabra(
+                encontrada
+            );
+
+
+            actualizarContador();
+
+
+            if(
+                palabrasEncontradas.length ===
+                palabras.length
+            ) {
+
+                document.getElementById(
+                    "mensaje"
+                ).textContent =
+                    "🎉 ¡Felicidades! ¡Completaste el nivel " +
+                    nivelActual +
+                    "!";
+
+            }
+
+        }
+
+
+        limpiarSeleccion();
+
     }
 
-    else if(!palabra.startsWith(seleccion)) {
-
-        document.getElementById("mensaje").textContent =
-            "❌ Esa combinación no corresponde.";
-
-        seleccion = "";
-
-        document.querySelectorAll(".letra")
-            .forEach(b => b.classList.remove("seleccionada"));
-    }
 }
+
+
+function marcarPalabra(palabra) {
+
+    const posiciones =
+        posicionesPalabras[palabra];
+
+
+    posiciones.forEach(posicion => {
+
+        const selector =
+            `.letra[data-fila="${posicion[0]}"][data-columna="${posicion[1]}"]`;
+
+
+        const elemento =
+            document.querySelector(selector);
+
+
+        if(elemento) {
+
+            elemento.classList.remove(
+                "seleccionada"
+            );
+
+            elemento.classList.add(
+                "encontrada"
+            );
+
+        }
+
+    });
+
+
+    const elementos =
+        document.querySelectorAll(".palabra");
+
+
+    elementos.forEach(elemento => {
+
+        if(
+            elemento.dataset.palabra === palabra
+        ) {
+
+            elemento.classList.add(
+                "encontrada"
+            );
+
+        }
+
+    });
+
+}
+
+
+function limpiarSeleccion() {
+
+    document
+        .querySelectorAll(".seleccionada")
+        .forEach(elemento => {
+
+            elemento.classList.remove(
+                "seleccionada"
+            );
+
+        });
+
+
+    seleccionActual = [];
+
+}
+
+
+function mostrarPalabras() {
+
+    const contenedor =
+        document.getElementById("palabras");
+
+
+    contenedor.innerHTML = "";
+
+
+    niveles[nivelActual]
+        .palabras
+        .forEach(palabra => {
+
+            const elemento =
+                document.createElement("div");
+
+
+            elemento.className = "palabra";
+
+            elemento.textContent =
+                palabra;
+
+            elemento.dataset.palabra =
+                palabra;
+
+
+            contenedor.appendChild(
+                elemento
+            );
+
+        });
+
+}
+
+
+function actualizarContador() {
+
+    document.getElementById(
+        "contador"
+    ).textContent =
+        "Palabras encontradas: " +
+        palabrasEncontradas.length +
+        " / " +
+        niveles[nivelActual].palabras.length;
+
+}
+
+
+function cambiarNivel(nivel) {
+
+    nivelActual = nivel;
+
+    document.getElementById(
+        "nivel"
+    ).textContent =
+        "Nivel " + nivel;
+
+    nuevoJuego();
+
+}
+
 
 nuevoJuego();
 
@@ -165,3 +763,4 @@ nuevoJuego();
 
 </body>
 </html>
+```
