@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Palabra Escondida</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #e8f4ff;
+}
+
+h1 {
+    color: #2563eb;
+}
+
+#letras {
+    display: grid;
+    grid-template-columns: repeat(8, 45px);
+    gap: 5px;
+    justify-content: center;
+    margin: 30px;
+}
+
+.letra {
+    width: 45px;
+    height: 45px;
+    border: none;
+    background: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.seleccionada {
+    background: #60a5fa;
+    color: white;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🔤 Palabra Escondida</h1>
+
+<p>Encuentra la palabra:</p>
+
+<h2 id="palabra"></h2>
+
+<div id="letras"></div>
+
+<p id="mensaje"></p>
+
+<button onclick="nuevoJuego()">Nueva palabra</button>
+
+<script>
+
+const palabras = [
+    "GATO",
+    "CASA",
+    "LUNA",
+    "SOL",
+    "ARBOL",
+    "FLOR",
+    "LIBRO",
+    "JUEGO"
+];
+
+let palabra;
+let seleccion = "";
+
+function nuevoJuego() {
+
+    palabra =
+        palabras[Math.floor(Math.random()*palabras.length)];
+
+    seleccion = "";
+
+    document.getElementById("palabra").textContent =
+        "???";
+
+    document.getElementById("mensaje").textContent = "";
+
+    crearLetras();
+}
+
+function crearLetras() {
+
+    let letras = palabra.split("");
+
+    const abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    while(letras.length < 64) {
+
+        letras.push(
+            abc[Math.floor(Math.random()*abc.length)]
+        );
+    }
+
+    letras.sort(() => Math.random()-0.5);
+
+    let contenedor =
+        document.getElementById("letras");
+
+    contenedor.innerHTML = "";
+
+    letras.forEach(letra => {
+
+        let boton = document.createElement("button");
+
+        boton.className = "letra";
+
+        boton.textContent = letra;
+
+        boton.onclick = function() {
+
+            seleccion += letra;
+
+            boton.classList.add("seleccionada");
+
+            comprobar();
+        };
+
+        contenedor.appendChild(boton);
+    });
+}
+
+function comprobar() {
+
+    if(seleccion === palabra) {
+
+        document.getElementById("mensaje").textContent =
+            "🎉 ¡Encontraste la palabra!";
+
+        document.getElementById("palabra").textContent =
+            palabra;
+    }
+
+    else if(!palabra.startsWith(seleccion)) {
+
+        document.getElementById("mensaje").textContent =
+            "❌ Esa combinación no corresponde.";
+
+        seleccion = "";
+
+        document.querySelectorAll(".letra")
+            .forEach(b => b.classList.remove("seleccionada"));
+    }
+}
+
+nuevoJuego();
+
+</script>
+
+</body>
+</html>
